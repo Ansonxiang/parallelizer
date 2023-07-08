@@ -14,20 +14,23 @@ class parallelizer():
                 n_jobs = self.n_jobs
                 if axis == 0:
                     data_count=(kwargs[parrall_meter].shape[0]-start)
-                    chunk_size =  data_count// n_jobs
+                    q, r = divmod(data_count, n_jobs)
+                    group_sizes = [q + 1] * r + [q] * (n_jobs - r)
+                    groups = [list(range(sum(group_sizes[:i]), sum(group_sizes[:i+1]))) for i in range(n_jobs)]
                     chunks=[]
-                    for i in range(0, data_count, chunk_size):
-                        sub_kwargs={k:v.iloc[list(range(0,start))+list(range(start+i,min(start+i+chunk_size,data_count))),:] for k,v in kwargs.items() if k==parrall_meter}
+                    for gp in groups:
+                        sub_kwargs={k:v.iloc[list(range(0,start))+list([x+start for x in gp]),:] for k,v in kwargs.items() if k==parrall_meter}
                         sub_kwargs.update({k:v for k,v in kwargs.items() if k!=parrall_meter})
                         chunks.append(sub_kwargs)
 
-                elif axis == 1:
-                    
+                elif axis == 1:                    
                     data_count=(kwargs[parrall_meter].shape[1]-start)
-                    chunk_size =  data_count// n_jobs
+                    q, r = divmod(data_count, n_jobs)
+                    group_sizes = [q + 1] * r + [q] * (n_jobs - r)
+                    groups = [list(range(sum(group_sizes[:i]), sum(group_sizes[:i+1]))) for i in range(n_jobs)]
                     chunks=[]
-                    for i in range(0, data_count, chunk_size):
-                        sub_kwargs={k:v.iloc[:,list(range(0,start))+list(range(start+i,min(start+i+chunk_size,data_count)))] for k,v in kwargs.items() if k==parrall_meter}
+                    for gp in groups:
+                        sub_kwargs={k:v.iloc[:,list(range(0,start))+list([x+start for x in gp])] for k,v in kwargs.items() if k==parrall_meter}
                         sub_kwargs.update({k:v for k,v in kwargs.items() if k!=parrall_meter})
                         chunks.append(sub_kwargs)
                 else:
